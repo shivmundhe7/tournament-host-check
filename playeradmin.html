@@ -88,9 +88,45 @@
       font-size: 1.2rem;
       font-weight: bold;
     }
+
+    /* Login overlay */
+    #loginOverlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #0f172a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    #loginOverlay input {
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      width: 250px;
+    }
+    #loginOverlay button {
+      padding: 10px 16px;
+      margin-left: 10px;
+      background: #2563eb;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
+  <div id="loginOverlay">
+    <input type="password" id="adminPass" placeholder="Enter Admin Password" />
+    <button onclick="checkPassword()">Login</button>
+  </div>
+
   <nav>
     <div class="nav_logo">
       <a href="index.html">
@@ -132,6 +168,27 @@
     </div>
   </div>
 
+  <!-- PASSWORD SCRIPT -->
+  <script>
+    const ADMIN_PASS = "5656"; // Change your admin password here
+
+    function checkPassword() {
+      const input = document.getElementById("adminPass").value;
+      if (input === ADMIN_PASS) {
+        sessionStorage.setItem("admin_logged_in", "true");
+        document.getElementById("loginOverlay").style.display = "none";
+      } else {
+        alert("Wrong password!");
+      }
+    }
+
+    // If already logged in, hide login prompt
+    if (sessionStorage.getItem("admin_logged_in") === "true") {
+      document.getElementById("loginOverlay").style.display = "none";
+    }
+  </script>
+
+  <!-- FIREBASE SCRIPT -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
