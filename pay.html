@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registration / Payment</title>
+  <link rel="stylesheet" href="pay.css" />
+  <style>
+    .full-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 2000;
+      text-align: center;
+      padding: 24px;
+    }
+    .full-overlay button {
+      padding: 10px 16px;
+      border: none;
+      background: #ff5f3d;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <div class="nav_logo">
+      <a href="index.html" aria-label="Home">
+        <img src="img/Garena-Free-Fire-Logo-PNG-HD-Images.png" alt="Free Fire Logo" />
+      </a>
+    </div>
+    <button class="burger" aria-label="Menu" aria-expanded="false">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+    <div class="nav_links">
+      <ul>
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/players.html">Participated Player</a></li>
+        <li><a href="/about.html">Organizer</a></li>
+        <li><a href="/pay.html" class="active">Registration</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="contact-container">
+      <form id="regForm" action="https://api.web3forms.com/submit" method="POST" class="contact-left">
+        <div class="contact-left-title">
+          <h2>Registration Form </h2>
+          <hr />
+        </div>
+        <h4 id="summary-text">Registered Players : 0 / 48</h4>
+
+        <input type="hidden" name="access_key" value="cbc101c3-52ae-47e6-9177-dff4103101f0" />
+
+        <input type="text" name="name" placeholder="Player Name" class="contact-inputs" required />
+        <input type="email" name="email" placeholder="Player Email" class="contact-inputs" required />
+        <input type="number" name="game_uid" placeholder="Game UID" class="contact-inputs" required />
+
+        <div class="subscription-note">
+          <label>
+            Subscribed Channel and Upload Image Here<br />
+            Channel Link - <a href="https://www.youtube.com/@shivplayzyt7" target="_blank" rel="noopener">Click here to Subscribe Channel</a>
+          </label>
+        </div>
+
+        <div class="payment-section">
+          <label>
+            Scan This QR Code For The Payment<br />
+            <img src="/scanner1.svg" width="200" height="200" alt="Payment QR Code" />
+          </label>
+
+          <div class="upi-id">
+            <h3>UPI ID - xxxxx@ybl</h3>
+          </div>
+
+          <label>
+            UTR / Transaction ID:<br />
+            <input type="text" name="utr" placeholder="Enter UTR or txn ID" required />
+          </label>
+
+          <label>
+            Amount Paid:<br />
+            <input type="text" name="amount" placeholder="e.g.,50" required />
+          </label>
+
+          <label>
+            Transaction Date:<br />
+            <input type="date" name="txn_date" required />
+          </label>
+
+          <label>
+            Transaction Time:<br />
+            <input type="time" name="txn_time" required />
+          </label>
+
+          <label>
+            Payer Name:<br />
+            <input type="text" name="payer_name" placeholder="As per bank account" required />
+          </label>
+        </div>
+
+        <div class="confirmation-notes">
+          <h3>Once Your Registration Is Confirmed, We Will Let You Know By Sending Email Within 1 Hour</h3>
+          <h3>You Will Be Added To Tournament Group</h3>
+        </div>
+
+        <button type="submit" id="submitBtn">Submit</button>
+      </form>
+
+      <div class="contact-right">
+        <!-- optional visuals or instructions -->
+      </div>
+    </div>
+
+  </main>
+
+  <footer style="text-align:center; padding:12px; font-size:0.8rem; background: rgba(20, 20, 35, 0.95); color:white;">
+    <div>This website created by Shiv Mundhe & Baliram Rathod.</div>
+    <div>&copy; 2025 All rights reserved.</div>
+  </footer>
+
+  <div id="fullOverlay" class="full-overlay" style="display:none;">
+    <div>
+      <strong>48 Players Registration Has Been Completed!</strong>
+      <p>Sorry, you are late. Try next time for another tournament.</p>
+    </div>
+    <button onclick="window.location.href='index.html'">Go Back</button>
+  </div>
+
+  <script>
+    const burger = document.querySelector('.burger');
+    const navLinks = document.querySelector('.nav_links');
+    burger.addEventListener('click', () => {
+      const expanded = burger.getAttribute('aria-expanded') === 'true';
+      burger.setAttribute('aria-expanded', !expanded);
+      navLinks.classList.toggle('open');
+    });
+
+    // registration logic
+    const MAX = 48;
+    const form = document.getElementById('regForm');
+    const summaryText = document.getElementById('summary-text');
+    const overlay = document.getElementById('fullOverlay');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function getRegistrations() {
+      try {
+        return JSON.parse(localStorage.getItem('registeredPlayers') || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function updateSummary() {
+      const regs = getRegistrations();
+      summaryText.textContent = `Registered Players : ${regs.length} / ${MAX}`;
+      if (regs.length >= MAX) {
+        submitBtn.disabled = true;
+        overlay.style.display = 'flex';
+      }
+    }
+
+    function sanitize(str) {
+      return String(str).trim();
+    }
+
+    form.addEventListener('submit', e => {
+      const regs = getRegistrations();
+      if (regs.length >= MAX) {
+        e.preventDefault();
+        updateSummary();
+        return;
+      }
+
+      // gather fields
+      const formData = new FormData(form);
+      const entry = {
+        name: sanitize(formData.get('name') || ''),
+        email: sanitize(formData.get('email') || ''),
+        game_uid: sanitize(formData.get('game_uid') || ''),
+        utr: sanitize(formData.get('utr') || ''),
+        amount: sanitize(formData.get('amount') || ''),
+        txn_date: sanitize(formData.get('txn_date') || ''),
+        txn_time: sanitize(formData.get('txn_time') || ''),
+        payer_name: sanitize(formData.get('payer_name') || ''),
+        registeredAt: new Date().toISOString()
+      };
+
+      // Append and save
+      regs.push(entry);
+      localStorage.setItem('registeredPlayers', JSON.stringify(regs));
+      updateSummary();
+      // allow the form to continue to web3forms (no preventDefault)
+      // optionally, you could redirect instead of submitting if you don't want external POST
+    });
+
+    // init
+    updateSummary();
+  </script>
+
+  <script type="module">
+    // Firebase (unchanged)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDhz-rZAVmQyB-9fq_XC2PSdpFN_fuWU7o",
+      authDomain: "tournament-web-2c8d8.firebaseapp.com",
+      projectId: "tournament-web-2c8d8",
+      storageBucket: "tournament-web-2c8d8.firebasestorage.app",
+      messagingSenderId: "921608963618",
+      appId: "1:921608963618:web:461b280bc73cbe69d46c7b",
+      measurementId: "G-J0Q56H032P"
+    };
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    let players = JSON.parse(localStorage.getItem('registeredPlayers') || '[]');
+players.push({
+  name: nameInput.value,
+  game_uid: uidInput.value,
+  amount: feeInput.value,
+  utr: utrInput.value,
+  registeredAt: new Date().toISOString()
+});
+localStorage.setItem('registeredPlayers', JSON.stringify(players));
+
+  </script>
+</body>
+
+</html>

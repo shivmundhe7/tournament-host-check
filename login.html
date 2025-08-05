@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Login</title>
+</head>
+<body style="background:#0f172a; color:white; font-family:sans-serif; text-align:center; padding:50px;">
+  <h2>Admin Login</h2>
+  <form onsubmit="login(event)">
+    <input type="password" id="pass" placeholder="Enter Admin Password" required style="padding:10px; border-radius:5px; border:none;">
+    <br><br>
+    <button type="submit" style="padding:10px 20px; border:none; border-radius:5px; background:#ff5f3d; color:white; cursor:pointer;">Login</button>
+  </form>
+
+  <script>
+  const ADMIN_PASS = "5656"; // change to your password
+
+  function login(e) {
+    e.preventDefault();
+    if (document.getElementById('pass').value === ADMIN_PASS) {
+      sessionStorage.setItem("admin_auth", "true");
+      window.location.href = "playeradmin.html";
+    } else {
+      alert("Wrong password");
+    }
+  }
+  </script>
+</body>
+</html>

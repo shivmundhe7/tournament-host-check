@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel - Players</title>
+  <link rel="stylesheet" href="pay.css" />
+  <style>
+    body {
+      background: #0f172a;
+      color: #f0f5ff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+    }
+    nav {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem 0 1.5rem;
+      gap: 1rem;
+      background: rgba(20, 20, 35, 0.95);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+    }
+    .nav_logo img { height: 45px; }
+    .main-content {
+      max-width: 1100px;
+      margin: 100px auto 40px;
+      padding: 0 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .table-wrapper {
+      background: #1f2f55;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.5);
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    thead {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+    }
+    th { font-weight: 600; }
+    tr:hover { background: rgba(255, 255, 255, 0.03); }
+    .remove-btn {
+      padding: 6px 12px;
+      background: #ff5f3d;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .remove-btn:hover {
+      background: #e34d2f;
+    }
+    .summary {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .card {
+      background: #1f2f55;
+      padding: 12px 20px;
+      border-radius: 8px;
+      min-width: 140px;
+      text-align: center;
+    }
+    .card .label {
+      display: block;
+      font-size: 0.7rem;
+      color: #9aa7c1;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .card .value {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav_logo">
+      <a href="index.html">
+        <img src="img/Garena-Free-Fire-Logo-PNG-HD-Images.png" alt="Free Fire Logo">
+      </a>
+    </div>
+    <div style="color:white;font-weight:bold;">Admin Panel</div>
+  </nav>
+
+  <div class="main-content">
+    <h1>Registered Players (Admin)</h1>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>UID</th>
+            <th>Game</th>
+            <th>Fee</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="players-body"></tbody>
+      </table>
+    </div>
+    <p id="no-data" style="display:none;text-align:center;margin-top:12px;">No registrations yet.</p>
+
+    <div class="summary">
+      <div class="card">
+        <span class="label">Registered</span>
+        <span class="value" id="registered-count">0 / 48</span>
+      </div>
+      <div class="card">
+        <span class="label">Spots Left</span>
+        <span class="value" id="spots-left">48</span>
+      </div>
+    </div>
+  </div>
+
+  <footer style="text-align:center; padding:12px; font-size:0.8rem; background: rgba(20, 20, 35, 0.95); color:white;">
+    <div>This website created by Shiv Mundhe & Baliram Rathod.</div>
+    <div>&copy; 2025 All rights reserved.</div>
+  </footer>
+
+<script>
+if (sessionStorage.getItem("admin_auth") !== "true") {
+  window.location.href = "login.html";
+}
+
+const MAX = 48;
+
+function safe(s) {
+  return String(s || '').replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function getRegistrations() {
+  try { return JSON.parse(localStorage.getItem('registeredPlayers') || '[]'); }
+  catch { return []; }
+}
+function saveRegistrations(arr) {
+  localStorage.setItem('registeredPlayers', JSON.stringify(arr));
+}
+function formatDate(iso) {
+  try {
+    return new Date(iso).toLocaleString();
+  } catch { return iso; }
+}
+function paymentStatus(entry) {
+  if (entry.utr && entry.amount) {
+    return '<span style="color:#22c55e;font-weight:600;">Paid</span>';
+  }
+  return '<span style="color:#eab308;font-weight:600;">Pending</span>';
+}
+function render() {
+  const regs = getRegistrations();
+  const body = document.getElementById('players-body');
+  const noData = document.getElementById('no-data');
+  body.innerHTML = '';
+
+  if (regs.length === 0) {
+    noData.style.display = 'block';
+  } else {
+    noData.style.display = 'none';
+  }
+
+  regs.forEach((r, index) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${safe(r.name)}</td>
+      <td>${safe(r.game_uid)}</td>
+      <td>Free Fire</td>
+      <td>₹${safe(r.amount)}</td>
+      <td>${paymentStatus(r)}</td>
+      <td>${formatDate(r.registeredAt)}</td>
+      <td><button data-index="${index}" class="remove-btn">Remove</button></td>
+    `;
+    body.appendChild(tr);
+  });
+
+  document.getElementById('registered-count').textContent = `${regs.length} / ${MAX}`;
+  document.getElementById('spots-left').textContent = `${Math.max(0, MAX - regs.length)}`;
+
+  document.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.getAttribute('data-index'), 10);
+      if (!isNaN(idx) && confirm('Remove player?')) {
+        const updated = getRegistrations();
+        updated.splice(idx, 1);
+        saveRegistrations(updated);
+        render();
+      }
+    });
+  });
+}
+render();
+</script>
+
+</body>
+</html>
