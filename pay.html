@@ -143,103 +143,74 @@
     <button onclick="window.location.href='index.html'">Go Back</button>
   </div>
 
-  <script>
-    const burger = document.querySelector('.burger');
-    const navLinks = document.querySelector('.nav_links');
-    burger.addEventListener('click', () => {
-      const expanded = burger.getAttribute('aria-expanded') === 'true';
-      burger.setAttribute('aria-expanded', !expanded);
-      navLinks.classList.toggle('open');
-    });
-
-    // registration logic
-    const MAX = 48;
-    const form = document.getElementById('regForm');
-    const summaryText = document.getElementById('summary-text');
-    const overlay = document.getElementById('fullOverlay');
-    const submitBtn = document.getElementById('submitBtn');
-
-    function getRegistrations() {
-      try {
-        return JSON.parse(localStorage.getItem('registeredPlayers') || '[]');
-      } catch {
-        return [];
-      }
-    }
-
-    function updateSummary() {
-      const regs = getRegistrations();
-      summaryText.textContent = `Registered Players : ${regs.length} / ${MAX}`;
-      if (regs.length >= MAX) {
-        submitBtn.disabled = true;
-        overlay.style.display = 'flex';
-      }
-    }
-
-    function sanitize(str) {
-      return String(str).trim();
-    }
-
-    form.addEventListener('submit', e => {
-      const regs = getRegistrations();
-      if (regs.length >= MAX) {
-        e.preventDefault();
-        updateSummary();
-        return;
-      }
-
-      // gather fields
-      const formData = new FormData(form);
-      const entry = {
-        name: sanitize(formData.get('name') || ''),
-        email: sanitize(formData.get('email') || ''),
-        game_uid: sanitize(formData.get('game_uid') || ''),
-        utr: sanitize(formData.get('utr') || ''),
-        amount: sanitize(formData.get('amount') || ''),
-        txn_date: sanitize(formData.get('txn_date') || ''),
-        txn_time: sanitize(formData.get('txn_time') || ''),
-        payer_name: sanitize(formData.get('payer_name') || ''),
-        registeredAt: new Date().toISOString()
-      };
-
-      // Append and save
-      regs.push(entry);
-      localStorage.setItem('registeredPlayers', JSON.stringify(regs));
-      updateSummary();
-      // allow the form to continue to web3forms (no preventDefault)
-      // optionally, you could redirect instead of submitting if you don't want external POST
-    });
-
-    // init
-    updateSummary();
-  </script>
-
   <script type="module">
-    // Firebase (unchanged)
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
-    const firebaseConfig = {
-      apiKey: "AIzaSyDhz-rZAVmQyB-9fq_XC2PSdpFN_fuWU7o",
-      authDomain: "tournament-web-2c8d8.firebaseapp.com",
-      projectId: "tournament-web-2c8d8",
-      storageBucket: "tournament-web-2c8d8.firebasestorage.app",
-      messagingSenderId: "921608963618",
-      appId: "1:921608963618:web:461b280bc73cbe69d46c7b",
-      measurementId: "G-J0Q56H032P"
-    };
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    let players = JSON.parse(localStorage.getItem('registeredPlayers') || '[]');
-players.push({
-  name: nameInput.value,
-  game_uid: uidInput.value,
-  amount: feeInput.value,
-  utr: utrInput.value,
-  registeredAt: new Date().toISOString()
-});
-localStorage.setItem('registeredPlayers', JSON.stringify(players));
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, push, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  </script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCk3hd6Pb0hIgcXgObjzUkSGgajiKZkh78",
+    authDomain: "freefiretournament-8ff16.firebaseapp.com",
+    projectId: "freefiretournament-8ff16",
+    storageBucket: "freefiretournament-8ff16.appspot.com",
+    messagingSenderId: "998637978981",
+    appId: "1:998637978981:web:62220e519e387b83ad8d8c",
+    databaseURL: "https://freefiretournament-8ff16-default-rtdb.firebaseio.com"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const MAX = 48;
+  const form = document.getElementById("regForm");
+  const summaryText = document.getElementById("summary-text");
+  const overlay = document.getElementById("fullOverlay");
+
+  // Count existing registrations
+  async function updateCount() {
+    const snapshot = await get(ref(db, 'registrations'));
+    const data = snapshot.exists() ? snapshot.val() : {};
+    const count = Object.keys(data).length;
+    summaryText.textContent = `Registered Players : ${count} / ${MAX}`;
+    if (count >= MAX) {
+      document.getElementById("submitBtn").disabled = true;
+      overlay.style.display = "flex";
+    }
+  }
+
+  updateCount();
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+    const entry = {
+      name: formData.get("name"),
+      email: formData.get("email"),
+      game_uid: formData.get("game_uid"),
+      utr: formData.get("utr"),
+      amount: formData.get("amount"),
+      txn_date: formData.get("txn_date"),
+      txn_time: formData.get("txn_time"),
+      payer_name: formData.get("payer_name"),
+      registeredAt: new Date().toISOString()
+    };
+
+    // Check total before submitting
+    const snapshot = await get(ref(db, 'registrations'));
+    const data = snapshot.exists() ? snapshot.val() : {};
+    if (Object.keys(data).length >= MAX) {
+      alert("Tournament is full!");
+      return;
+    }
+
+    await push(ref(db, 'registrations'), entry);
+    alert("Registration submitted successfully!");
+    form.reset();
+    updateCount();
+  });
+</script>
+
+  
 </body>
 
 </html>
