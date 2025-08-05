@@ -29,23 +29,77 @@
       font-size: 1rem;
       margin-top: 10px;
     }
+    /* Hamburger button */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: white;
+  cursor: pointer;
+  z-index: 999;
+}
+
+/* Responsive navbar */
+@media (max-width: 768px) {
+  .hamburger {
+    display: block;
+  }
+
+  .nav_links {
+    display: none;
+    flex-direction: column;
+    background: #0f172a;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    width: 100%;
+  }
+
+  .nav_links.active {
+    display: flex;
+  }
+
+  .nav_links ul {
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav_links ul li {
+    text-align: center;
+    padding: 12px 0;
+  }
+
+  .nav_links ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.1rem;
+  }
+}
+
   </style>
 </head>
 
 <body>
-  <nav>
-    <div class="nav_logo">
-      <a href="index.html"><img src="img/Garena-Free-Fire-Logo-PNG-HD-Images.png" alt="Free Fire Logo"/></a>
-    </div>
-    <div class="nav_links">
-      <ul>
-        <li><a href="/index.html">Home</a></li>
-        <li><a href="/players.html">Participated Player</a></li>
-        <li><a href="/about.html">Organizer</a></li>
-        <li><a href="/pay.html" class="active">Registration</a></li>
-      </ul>
-    </div>
-  </nav>
+<nav>
+  <div class="nav_logo">
+    <a href="index.html">
+      <img src="img/Garena-Free-Fire-Logo-PNG-HD-Images.png" alt="Free Fire Logo"/>
+    </a>
+  </div>
+
+  <button class="hamburger" id="hamburger">&#9776;</button>
+
+  <div class="nav_links" id="navLinks">
+    <ul>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/players.html">Participated Player</a></li>
+      <li><a href="/about.html">Organizer</a></li>
+      <li><a href="/pay.html" class="active">Registration</a></li>
+    </ul>
+  </div>
+</nav>
 
   <main class="main-content">
     <div class="contact-container">
@@ -198,7 +252,12 @@ fetch("https://api.w3forms.com/submit", {
   }
 })
 .catch(err => console.error("W3Forms error:", err));
+    const hamburger = document.getElementById('hamburger');
+    const navLinks = document.getElementById('navLinks');
 
+    hamburger.addEventListener('click', () => {
+      navLinks.classList.toggle('active');
+    });
   </script>
 </body>
 </html>
