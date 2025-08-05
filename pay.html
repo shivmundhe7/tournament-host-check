@@ -5,143 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Registration / Payment</title>
   <link rel="stylesheet" href="pay.css" />
-  <style>
-    .full-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .full-overlay button {
-      background: #ff5f3d;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 1rem;
-      margin-top: 10px;
-    }
-  </style>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-database-compat.js"></script>
 </head>
-
 <body>
-  <nav>
-    <div class="nav_logo">
-      <a href="index.html"><img src="img/Garena-Free-Fire-Logo-PNG-HD-Images.png" alt="Free Fire Logo"/></a>
+
+  <div class="container">
+    <h1>Free Fire Tournament Registration</h1>
+    <form id="registrationForm">
+      <input type="text" name="name" placeholder="Player Name" required />
+      <input type="text" name="email" placeholder="Email" required />
+      <input type="text" name="game_uid" placeholder="Game UID" required />
+      <input type="text" name="utr" placeholder="Transaction UTR" required />
+      <input type="number" name="amount" placeholder="Amount Paid" required />
+      <input type="date" name="txn_date" required />
+      <input type="time" name="txn_time" required />
+      <input type="text" name="payer_name" placeholder="Payer Name" required />
+      <button type="submit">Register</button>
+    </form>
+
+    <div id="successPopup" style="display:none; color: green; margin-top: 20px;">
+      ✅ Registration successful!
     </div>
-    <div class="nav_links">
-      <ul>
-        <li><a href="/index.html">Home</a></li>
-        <li><a href="/players.html">Participated Player</a></li>
-        <li><a href="/about.html">Organizer</a></li>
-        <li><a href="/pay.html" class="active">Registration</a></li>
-      </ul>
-    </div>
-  </nav>
-
-  <main class="main-content">
-    <div class="contact-container">
-      <form id="regForm" class="contact-left">
-        <div class="contact-left-title">
-          <h2>Registration Form</h2>
-          <hr/>
-        </div>
-        <h4 id="summary-text">Registered Players: 0 / 48</h4>
-
-        <input type="text" name="name" placeholder="Player Name" class="contact-inputs" required />
-        <input type="email" name="email" placeholder="Player Email" class="contact-inputs" required />
-        <input type="number" name="game_uid" placeholder="Game UID" class="contact-inputs" required />
-
-        <label>
-          Subscribed Channel and Upload Image Here<br />
-          <a href="https://www.youtube.com/@shivplayzyt7" target="_blank">Click here to Subscribe Channel</a>
-        </label>
-
-        <div class="payment-section">
-          <label>
-            Scan QR Code to Pay:<br/>
-            <img src="/scanner1.svg" width="200" alt="Payment QR"/>
-          </label>
-          <h3>UPI ID: xxxxx@ybl</h3>
-
-          <input type="text" name="utr" placeholder="UTR / Transaction ID" required />
-          <input type="text" name="amount" placeholder="Amount Paid" required />
-          <input type="date" name="txn_date" required />
-          <input type="time" name="txn_time" required />
-          <input type="text" name="payer_name" placeholder="Payer Bank Name" required />
-        </div>
-
-        <div class="confirmation-notes">
-          <p>You will receive an email confirmation within 1 hour.</p>
-          <p>Join the tournament group once approved.</p>
-        </div>
-
-        <button type="submit" id="submitBtn">Submit</button>
-      </form>
-    </div>
-  </main>
-
-  <footer style="text-align:center; padding:12px; font-size:0.8rem; background:#141423; color:white;">
-    <div>Created by Shiv Mundhe & Baliram Rathod</div>
-    <div>&copy; 2025 All rights reserved.</div>
-  </footer>
-
-  <div id="fullOverlay" class="full-overlay" style="display:none;">
-    <h2>48 Players Registered</h2>
-    <p>Sorry, registration is now closed.</p>
-    <button onclick="window.location.href='index.html'">Back to Home</button>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, push, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
+  <script>
+    // ✅ Firebase Configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyCk3hd6Pb0hIgcXgObjzUkSGgajiKZkh78",
-      authDomain: "freefiretournament-8ff16.firebaseapp.com",
-      databaseURL: "https://freefiretournament-8ff16-default-rtdb.firebaseio.com",
-      projectId: "freefiretournament-8ff16",
-      storageBucket: "freefiretournament-8ff16.appspot.com",
-      messagingSenderId: "998637978981",
-      appId: "1:998637978981:web:62220e519e387b83ad8d8c"
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      databaseURL: "YOUR_DB_URL",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    const MAX_PLAYERS = 48;
-    const form = document.getElementById("regForm");
-    const summaryText = document.getElementById("summary-text");
-    const overlay = document.getElementById("fullOverlay");
-    const submitBtn = document.getElementById("submitBtn");
-
-    async function updateCount() {
-      const snapshot = await get(ref(db, 'registrations'));
-      const data = snapshot.exists() ? snapshot.val() : {};
-      const count = Object.keys(data).length;
-
-      summaryText.textContent = `Registered Players: ${count} / ${MAX_PLAYERS}`;
-
-      if (count >= MAX_PLAYERS) {
-        submitBtn.disabled = true;
-        overlay.style.display = "flex";
-      }
-    }
-
-    updateCount();
-
+    // ✅ Form Submit Logic
+    const form = document.getElementById("registrationForm");
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-
       const formData = new FormData(form);
       const entry = {
         name: formData.get("name"),
@@ -152,53 +57,44 @@
         txn_date: formData.get("txn_date"),
         txn_time: formData.get("txn_time"),
         payer_name: formData.get("payer_name"),
-        registeredAt: new Date().toISOString()
+        timestamp: new Date().toISOString()
       };
 
-      const snapshot = await get(ref(db, 'registrations'));
-      const data = snapshot.exists() ? snapshot.val() : {};
-      if (Object.keys(data).length >= MAX_PLAYERS) {
-        alert("Registration full. Try next time.");
-        overlay.style.display = "flex";
-        return;
+      try {
+        // 🔄 Store to Firebase
+        await db.ref("registrations").push(entry);
+
+        // ✉️ Send Email via W3Forms
+        await fetch("https://api.w3forms.com/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            access_key: "cbc101c3-52ae-47e6-9177-dff4103101f0",
+            subject: "New Tournament Registration",
+            name: entry.name,
+            email: entry.email,
+            message: `
+              Game UID: ${entry.game_uid}
+              UTR: ${entry.utr}
+              Amount: ${entry.amount}
+              Date: ${entry.txn_date}
+              Time: ${entry.txn_time}
+              Payer: ${entry.payer_name}
+            `
+          })
+        });
+
+        // ✅ Show Success
+        form.reset();
+        document.getElementById("successPopup").style.display = "block";
+        setTimeout(() => {
+          document.getElementById("successPopup").style.display = "none";
+        }, 5000);
+      } catch (err) {
+        console.error("Registration failed:", err);
+        alert("❌ Something went wrong. Try again.");
       }
-
-      await push(ref(db, 'registrations'), entry);
-      alert("Registration submitted successfully!");
-      form.reset();
-      updateCount();
     });
-    // Send data to W3Forms for email notification
-fetch("https://api.w3forms.com/submit", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    access_key: "cbc101c3-52ae-47e6-9177-dff4103101f0",  // Replace this
-    subject: "New Tournament Registration",
-    name: entry.name,
-    email: entry.email,
-    message: `
-      Game UID: ${entry.game_uid}
-      UTR: ${entry.utr}
-      Amount: ${entry.amount}
-      Date: ${entry.txn_date}
-      Time: ${entry.txn_time}
-      Payer: ${entry.payer_name}
-    `
-  })
-})
-.then(res => res.json())
-.then(data => {
-  if (data.success) {
-    console.log("Email sent via W3Forms!");
-  } else {
-    console.error("Email error:", data);
-  }
-})
-.catch(err => console.error("W3Forms error:", err));
-
   </script>
 </body>
 </html>
