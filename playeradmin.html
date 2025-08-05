@@ -4,12 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Panel - Players</title>
-  <link rel="stylesheet" href="pay.css" />
   <style>
     body {
       background: #0f172a;
       color: #f0f5ff;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: system-ui, sans-serif;
       margin: 0;
     }
     nav {
@@ -20,8 +19,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 1rem 0 1.5rem;
-      gap: 1rem;
+      padding: 0 1rem;
       background: rgba(20, 20, 35, 0.95);
       backdrop-filter: blur(6px);
       z-index: 1000;
@@ -40,7 +38,6 @@
       background: #1f2f55;
       padding: 12px;
       border-radius: 8px;
-      box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.5);
       overflow-x: auto;
     }
     table {
@@ -53,7 +50,6 @@
     }
     th, td {
       padding: 12px 10px;
-      text-align: left;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       white-space: nowrap;
     }
@@ -67,9 +63,6 @@
       color: white;
       cursor: pointer;
       font-size: 0.85rem;
-    }
-    .remove-btn:hover {
-      background: #e34d2f;
     }
     .summary {
       display: flex;
@@ -90,7 +83,6 @@
       font-size: 0.7rem;
       color: #9aa7c1;
       text-transform: uppercase;
-      margin-bottom: 4px;
     }
     .card .value {
       font-size: 1.2rem;
@@ -98,89 +90,129 @@
     }
   </style>
 </head>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+<body>
+  <nav>
+    <div class="nav_logo">
+      <a href="index.html">
+        <img src="img/Garena-Free-Fire-Logo-PNG-HD-Images.png" alt="Logo" />
+      </a>
+    </div>
+  </nav>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCk3hd6Pb0hIgcXgObjzUkSGgajiKZkh78",
-    authDomain: "freefiretournament-8ff16.firebaseapp.com",
-    databaseURL: "https://freefiretournament-8ff16-default-rtdb.firebaseio.com",
-    projectId: "freefiretournament-8ff16",
-    storageBucket: "freefiretournament-8ff16.appspot.com",
-    messagingSenderId: "998637978981",
-    appId: "1:998637978981:web:62220e519e387b83ad8d8c"
-  };
+  <div class="main-content">
+    <h1>Admin Panel - Registered Players</h1>
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const MAX = 48;
+    <div class="summary">
+      <div class="card">
+        <span class="label">Registered</span>
+        <span class="value" id="registered-count">0 / 48</span>
+      </div>
+      <div class="card">
+        <span class="label">Spots Left</span>
+        <span class="value" id="spots-left">48</span>
+      </div>
+    </div>
 
-  const playersBody = document.getElementById('players-body');
-  const noData = document.getElementById('no-data');
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Player Name</th>
+            <th>UID</th>
+            <th>Game</th>
+            <th>Fee</th>
+            <th>Status</th>
+            <th>Registration Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="players-body"></tbody>
+      </table>
+      <p id="no-data" style="display:none; color: #ccc; text-align:center;">No players registered yet.</p>
+    </div>
+  </div>
 
-  function formatDate(iso) {
-    try {
-      return new Date(iso).toLocaleString();
-    } catch {
-      return iso;
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCk3hd6Pb0hIgcXgObjzUkSGgajiKZkh78",
+      authDomain: "freefiretournament-8ff16.firebaseapp.com",
+      databaseURL: "https://freefiretournament-8ff16-default-rtdb.firebaseio.com",
+      projectId: "freefiretournament-8ff16",
+      storageBucket: "freefiretournament-8ff16.appspot.com",
+      messagingSenderId: "998637978981",
+      appId: "1:998637978981:web:62220e519e387b83ad8d8c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const playersBody = document.getElementById('players-body');
+    const noData = document.getElementById('no-data');
+    const MAX = 48;
+
+    function safe(s) {
+      return String(s || '').replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
-  }
 
-  function paymentStatus(entry) {
-    if (entry.utr && entry.amount) {
-      return '<span style="color:#22c55e;font-weight:600;">Paid</span>';
-    }
-    return '<span style="color:#eab308;font-weight:600;">Pending</span>';
-  }
-
-  function safe(s) {
-    return String(s || '').replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  onValue(ref(db, "registrations"), (snapshot) => {
-    playersBody.innerHTML = '';
-    const data = snapshot.val();
-    if (!data) {
-      noData.style.display = "block";
-      document.getElementById("registered-count").textContent = `0 / ${MAX}`;
-      document.getElementById("spots-left").textContent = `${MAX}`;
-      return;
+    function formatDate(iso) {
+      try {
+        return new Date(iso).toLocaleString();
+      } catch {
+        return iso;
+      }
     }
 
-    noData.style.display = "none";
+    function paymentStatus(entry) {
+      return entry.utr && entry.amount
+        ? '<span style="color:#22c55e;font-weight:600;">Paid</span>'
+        : '<span style="color:#eab308;font-weight:600;">Pending</span>';
+    }
 
-    const keys = Object.keys(data);
-    keys.forEach((key) => {
-      const r = data[key];
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${safe(r.name)}</td>
-        <td>${safe(r.game_uid)}</td>
-        <td>Free Fire</td>
-        <td>₹${safe(r.amount)}</td>
-        <td>${paymentStatus(r)}</td>
-        <td>${formatDate(r.registeredAt)}</td>
-        <td><button data-id="${key}" class="remove-btn">Remove</button></td>
-      `;
-      playersBody.appendChild(tr);
-    });
+    onValue(ref(db, "registrations"), (snapshot) => {
+      playersBody.innerHTML = '';
+      const data = snapshot.val();
 
-    document.getElementById("registered-count").textContent = `${keys.length} / ${MAX}`;
-    document.getElementById("spots-left").textContent = `${Math.max(0, MAX - keys.length)}`;
+      if (!data) {
+        noData.style.display = "block";
+        document.getElementById("registered-count").textContent = `0 / ${MAX}`;
+        document.getElementById("spots-left").textContent = `${MAX}`;
+        return;
+      }
 
-    document.querySelectorAll(".remove-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const id = btn.getAttribute("data-id");
-        if (confirm("Remove player?")) {
-          await remove(ref(db, `registrations/${id}`));
-        }
+      noData.style.display = "none";
+
+      const keys = Object.keys(data);
+      keys.forEach((key) => {
+        const r = data[key];
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${safe(r.name)}</td>
+          <td>${safe(r.game_uid)}</td>
+          <td>Free Fire</td>
+          <td>₹${safe(r.amount)}</td>
+          <td>${paymentStatus(r)}</td>
+          <td>${formatDate(r.registeredAt)}</td>
+          <td><button data-id="${key}" class="remove-btn">Remove</button></td>
+        `;
+        playersBody.appendChild(tr);
+      });
+
+      document.getElementById("registered-count").textContent = `${keys.length} / ${MAX}`;
+      document.getElementById("spots-left").textContent = `${Math.max(0, MAX - keys.length)}`;
+
+      document.querySelectorAll(".remove-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-id");
+          if (confirm("Are you sure to remove this player?")) {
+            await remove(ref(db, `registrations/${id}`));
+          }
+        });
       });
     });
-  });
-
-</script>
-
+  </script>
 </body>
 </html>
